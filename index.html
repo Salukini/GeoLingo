@@ -657,7 +657,10 @@ body {
 "Slovenia": "si", 
 "Slovakia": "sk"
         };
-        
+         // AWS S3 Configuration
+        var AWS_S3_BUCKET = "geolingo-videos-2025";
+        var AWS_S3_REGION = "eu-north-1";
+        var S3_BASE_URL = `https://${AWS_S3_BUCKET}.s3.${AWS_S3_REGION}.amazonaws.com/videos/`;
         // Function to get flag URL from country name - using flagcdn.com for reliable PNG images
         function getFlagURL(countryName) {
             var isoCode = countryISO[countryName] || "un";
@@ -6281,33 +6284,19 @@ if (currentChannel.directUrl && (currentChannel.directUrl.includes('embed.europe
             }
             
             // Try video with different patterns
-            function tryVideoWithPatterns(isLocal) {
-                if (isLocal) {
-                    const patterns = generatePatterns(currentChannel.localPath);
+           if (isLocal && currentChannel.localPath) {
+                    // Try S3 URL first
+                    const s3Url = S3_BASE_URL + currentChannel.localPath.replace('Videos/', '');
+                    console.log('🌐 Trying S3 URL:', s3Url);
+                    video.src = s3Url;
+                    video.load();
                     
-                    function tryNextPattern() {
-                        if (currentPatternIndex >= patterns.length) {
-                            console.log('🔄 All local patterns failed, trying fallback URL...');
-                            video.removeEventListener('error', handlePatternError);
-                            tryVideoWithPatterns(false);
-                            return;
-                        }
-                        
-                        const currentPattern = patterns[currentPatternIndex];
-                        console.log(`🔄 Trying local pattern ${currentPatternIndex + 1}/${patterns.length}:`, currentPattern);
-                        
-                        video.src = encodeURI(currentPattern);
-                        video.load();
-                        currentPatternIndex++;
-                    }
+                    video.addEventListener('error', function(e) {
+                        console.log('❌ S3 URL failed, trying fallback');
+                        tryVideoWithPatterns(false);
+                    }, { once: true });
                     
-                    function handlePatternError(e) {
-                        console.log(`❌ Pattern ${currentPatternIndex}/${patterns.length} failed:`, video.src);
-                        setTimeout(tryNextPattern, 10);
-                    }
-                    
-                    video.addEventListener('error', handlePatternError);
-                    tryNextPattern();
+                }
                     
                 } else {
                     console.log('🌐 Trying fallback URL:', currentChannel.directUrl);
@@ -6369,10 +6358,14 @@ if (currentChannel.directUrl && (currentChannel.directUrl.includes('embed.europe
             videoStartTime = Date.now();
             
             // Start with local patterns if available, otherwise use URL
+         // Start with S3 if available, otherwise use direct URL
             if (currentChannel.localPath) {
                 tryVideoWithPatterns(true);
-            } else {
+            } else if (currentChannel.directUrl) {
                 tryVideoWithPatterns(false);
+            } else {
+                console.log('❌ No video source available');
+                videoPlayer.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: rgba(0,0,0,0.7); color: #4af6ff;">No video source available</div>';
             }
         }
 
