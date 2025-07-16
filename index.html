@@ -6281,10 +6281,10 @@ if (currentChannel.directUrl && (currentChannel.directUrl.includes('embed.europe
                     originalPath, // Try original first
                     // Don't create duplicate bracket patterns for long names - just try as-is
                 ];
-            }
+          }
             
             // Try video with different patterns
-          if (isLocal && currentChannel.localPath) {
+            if (isLocal && currentChannel.localPath) {
                 // Try S3 URL first
                 const s3Url = S3_BASE_URL + currentChannel.localPath.replace('Videos/', '');
                 console.log('🌐 Trying S3 URL:', s3Url);
@@ -6292,8 +6292,14 @@ if (currentChannel.directUrl && (currentChannel.directUrl.includes('embed.europe
                 video.load();
                 
                 video.addEventListener('error', function(e) {
-                    console.log('❌ S3 URL failed, trying fallback');
-                    tryVideoWithPatterns(false);
+                    console.log('❌ S3 URL failed, trying fallback URL');
+                    if (currentChannel.directUrl) {
+                        video.src = currentChannel.directUrl;
+                        video.load();
+                    } else {
+                        console.log('❌ No fallback URL available');
+                        if (!timer) startTimer();
+                    }
                 }, { once: true });
                 
             } else {
