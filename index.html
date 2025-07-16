@@ -661,6 +661,7 @@ body {
         var AWS_S3_BUCKET = "geolingo-videos-2025";
         var AWS_S3_REGION = "eu-north-1";
         var S3_BASE_URL = `https://${AWS_S3_BUCKET}.s3.${AWS_S3_REGION}.amazonaws.com/videos/`;
+        var isLocal = true;
         // Function to get flag URL from country name - using flagcdn.com for reliable PNG images
         function getFlagURL(countryName) {
             var isoCode = countryISO[countryName] || "un";
@@ -6373,6 +6374,7 @@ if (currentChannel.localPath) {
         }
 
        // Add this function here
+        
         function tryVideoWithPatterns(isLocal, video) {
             if (isLocal && currentChannel.localPath) {
                 // Try S3 URL first
@@ -6411,6 +6413,7 @@ if (currentChannel.localPath) {
                 }, { once: true });
             }
         }
+        
         function startTimer() {
             // Clear any existing timer
             if (timer) {
